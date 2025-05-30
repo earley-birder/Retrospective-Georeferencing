@@ -2,4 +2,4 @@ The code included here demonstrates how point-radius retrospective georeferencin
 
 The data, which are not included in this Github repository, can be downloaded from Statistics Canada here: https://www12.statcan.gc.ca/census-recensement/2021/geo/sip-pis/boundary-limites/index2021-eng.cfm?year=21.
 
-The methods used for Data download are outlined in the .html file knitted from the .Rmd.
+The methods used for Data download are outlined in the .pdf file knitted from the .Rmd.
