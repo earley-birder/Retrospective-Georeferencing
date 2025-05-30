@@ -2,7 +2,7 @@
 title: "Retrospective Georeferencing for Canadian Census Subdivisions in BC"
 author: "Nathan G. Earley"
 date: "2025-05-28"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Intro
 
-This document gives the rationale and background behind my retrospective georeferencing methods for insect specimens in the entomology collections in British Columbia (BC), Canada. The protocol that I have followed throughout this exercise is Zermoglio et al. ([2020](https://doi.org/10.35035/e09p-h128)). This is the suggested protocol for uploading data to GBIF (Chapman & Wieczorek [2020](https://doi.org/10.15468/doc-gg7h-s853)). 
+This document gives the rationale and background behind my retrospective georeferencing methods for insect specimens in the entomology collections in British Columbia (BC), Canada. The protocol that I have followed throughout this exercise is Zermoglio et al. ([2020](https://doi.org/10.35035/e09p-h128)). This is the suggested protocol for uploading data to GBIF (Chapman & Wieczorek [2020](https://doi.org/10.15468/doc-gg7h-s853)).
 
 ## Packages used
 
@@ -28,7 +28,7 @@ library(purrr)
 
 The data I am using here was obtained on 2025-May-27 from the [2021 Census - Boundary Files](https://www12.statcan.gc.ca/census-recensement/2021/geo/sip-pis/boundary-limites/index2021-eng.cfm?year=21) from Statistics Canada. I downloaded data with the following options selected: Language == English, Type == Cartographic Boundary Files (CBF), Administrative boundaries == Census subdivisions, Format == Shapefile (.shp). These data include the Census Subdivision (CSD) shapefiles used by Statistic Canada.
 
-See the [Reference Guide](https://www150.statcan.gc.ca/n1/pub/92-160-g/92-160-g2021002-eng.htm) for Boundary Files for more information. 
+See the [Reference Guide](https://www150.statcan.gc.ca/n1/pub/92-160-g/92-160-g2021002-eng.htm) for Boundary Files for more information.
 
 ```{r data}
 ## Read in the data
@@ -45,9 +45,14 @@ Optimized Minimum Enclosing Circles (OMECs) are a common point-radius method for
 
 ```{r OMEC, include = TRUE, echo = FALSE, warning = FALSE}
 ## This function 
-compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
+compute_omec <- function(PRUID, 
+                         CSDNAME, 
+                         CSDTYPE, 
+                         geom) {
   # Ensure geometry is an sfc object
-  city <- sf::st_sf(PRUID = PRUID, CSDNAME = CSDNAME, CSDTYPE = CSDTYPE,
+  city <- sf::st_sf(PRUID = PRUID, 
+                    CSDNAME = CSDNAME, 
+                    CSDTYPE = CSDTYPE,
                     geometry = sf::st_sfc(geom, crs = sf::st_crs(BC_CSD)))
   
   # Convex hull and coordinates (used for optimization)
@@ -56,7 +61,10 @@ compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
   
   # Objective function: max distance from center to hull points
   objective <- function(center) {
-    max(sqrt(rowSums((coords - matrix(center, nrow = nrow(coords), ncol = 2, byrow = TRUE))^2)))
+    max(sqrt(rowSums((coords - matrix(center, 
+                                      nrow = nrow(coords), 
+                                      ncol = 2, 
+                                      byrow = TRUE))^2)))
   }
   
   # Start point = centroid of hull
@@ -68,7 +76,8 @@ compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
   radius <- opt$value
   
   # Create center point
-  center_point <- sf::st_sfc(sf::st_point(center_utm), crs = sf::st_crs(city))
+  center_point <- sf::st_sfc(sf::st_point(center_utm), 
+                             crs = sf::st_crs(city))
   
   # Check if center is inside the original city polygon
   is_inside <- sf::st_within(center_point, city, sparse = FALSE)[1, 1]
@@ -81,7 +90,10 @@ compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
     
     # Recalculate radius using all exterior coordinates of the polygon
     boundary_coords <- sf::st_coordinates(sf::st_cast(city, "MULTILINESTRING"))[, 1:2]
-    radius <- max(sqrt(rowSums((boundary_coords - matrix(center_utm, nrow = nrow(boundary_coords), ncol = 2, byrow = TRUE))^2)))
+    radius <- max(sqrt(rowSums((boundary_coords - matrix(center_utm, 
+                                                         nrow = nrow(boundary_coords), 
+                                                         ncol = 2, 
+                                                         byrow = TRUE))^2)))
   }
   
   # Convert final center to lat/lon
@@ -150,8 +162,11 @@ To calculate the OMEC and point radius for every Census Subdivision in BC I use 
 ## This function does the heavy lifting for this method
 compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
   # Ensure geometry is an sfc object
-  city <- sf::st_sf(PRUID = PRUID, CSDNAME = CSDNAME, CSDTYPE = CSDTYPE,
-                    geometry = sf::st_sfc(geom, crs = sf::st_crs(BC_CSD)))
+  city <- sf::st_sf(PRUID = PRUID, 
+                    CSDNAME = CSDNAME, 
+                    CSDTYPE = CSDTYPE,
+                    geometry = sf::st_sfc(geom, 
+                                          crs = sf::st_crs(BC_CSD)))
 
   # Convex hull and coordinates (used for optimization)
   hull <- sf::st_convex_hull(city)
@@ -159,7 +174,10 @@ compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
 
   # Objective function: max distance from center to hull points
   objective <- function(center) {
-    max(sqrt(rowSums((coords - matrix(center, nrow = nrow(coords), ncol = 2, byrow = TRUE))^2)))
+    max(sqrt(rowSums((coords - matrix(center, 
+                                      nrow = nrow(coords), 
+                                      ncol = 2, 
+                                      byrow = TRUE))^2)))
   }
 
   # Start point = centroid of hull
@@ -171,7 +189,8 @@ compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
   radius <- opt$value
 
   # Create center point
-  center_point <- sf::st_sfc(sf::st_point(center_utm), crs = sf::st_crs(city))
+  center_point <- sf::st_sfc(sf::st_point(center_utm), 
+                             crs = sf::st_crs(city))
 
   # Check if center is inside the original city polygon
   is_inside <- sf::st_within(center_point, city, sparse = FALSE)[1, 1]
@@ -184,11 +203,16 @@ compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
 
     # Recalculate radius using all exterior coordinates of the polygon
     boundary_coords <- sf::st_coordinates(sf::st_cast(city, "MULTILINESTRING"))[, 1:2]
-    radius <- max(sqrt(rowSums((boundary_coords - matrix(center_utm, nrow = nrow(boundary_coords), ncol = 2, byrow = TRUE))^2)))
+    radius <- max(sqrt(rowSums((boundary_coords - matrix(center_utm, 
+                                                         nrow = nrow(boundary_coords), 
+                                                         ncol = 2, 
+                                                         byrow = TRUE))^2)))
   }
 
   # Convert final center to lat/lon
-  center_vect <- terra::vect(matrix(center_utm, ncol = 2), crs = sf::st_crs(city)$wkt)
+  center_vect <- terra::vect(matrix(center_utm, 
+                                    ncol = 2), 
+                             crs = sf::st_crs(city)$wkt)
   center_latlon <- sf::st_as_sf(terra::project(center_vect, "EPSG:4326")) |>
     sf::st_coordinates()
 
@@ -201,7 +225,10 @@ compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
 
 # Apply function across all BC_CSD
 omec_results <- purrr::pmap_dfr(
-  list(BC_CSD$PRUID, BC_CSD$CSDNAME, BC_CSD$CSDTYPE, BC_CSD$geometry),
+  list(BC_CSD$PRUID, 
+       BC_CSD$CSDNAME, 
+       BC_CSD$CSDTYPE, 
+       BC_CSD$geometry),
   compute_omec
 )
 
@@ -209,7 +236,7 @@ omec_results <- purrr::pmap_dfr(
 BC_CSD_omec <- bind_cols(BC_CSD, omec_results)
 ```
 
-This code calculates the OMEC, defines the centroid, checks that the centroid is within the bounds of the polygon, and adds the latitude, longitude, and accuracy into the dataframe for each city. 
+This code calculates the OMEC, defines the centroid, checks that the centroid is within the bounds of the polygon, and adds the latitude, longitude, and accuracy into the dataframe for each city.
 
 ## Points from UBC
 
@@ -222,15 +249,24 @@ metro_geom <- BC_CSD_omec |>
   dplyr::filter(CSDNAME == "Metro Vancouver A") |>
   sf::st_geometry()
 multi_geom <- metro_geom[[1]]  # list of POLYGONs
-all_polys <- sf::st_sfc(lapply(multi_geom, sf::st_polygon), crs = sf::st_crs(BC_CSD_omec))
-plot(all_polys, col = "lightgrey", border = "darkgrey", main = "Metro Vancouver A")
-highlight_poly <- sf::st_sfc(sf::st_polygon(multi_geom[[14]]), crs = sf::st_crs(BC_CSD_omec))
+all_polys <- sf::st_sfc(lapply(multi_geom, 
+                               sf::st_polygon), 
+                        crs = sf::st_crs(BC_CSD_omec))
+plot(all_polys, 
+     col = "lightgrey", 
+     border = "darkgrey", 
+     main = "Metro Vancouver A")
+highlight_poly <- sf::st_sfc(sf::st_polygon(multi_geom[[14]]),
+                             crs = sf::st_crs(BC_CSD_omec))
 plot(highlight_poly, col = "red", add = TRUE)
 pt <- BC_CSD_omec |>
   dplyr::filter(CSDNAME == "Metro Vancouver A") |>
   dplyr::select(OMEC_POINT_LON, OMEC_POINT_LAT) |>
   as.data.frame()
-points(pt$OMEC_POINT_LON, pt$OMEC_POINT_LAT, pch = 19, col = "black")
+points(pt$OMEC_POINT_LON, 
+       pt$OMEC_POINT_LAT, 
+       pch = 19, 
+       col = "black")
 ```
 
 ### Subset to UBC Campus
@@ -248,9 +284,11 @@ MetroVanA <- Can_cities |>
 multi_geom <- st_geometry(MetroVanA)[[1]]
 # length(multi_geom)  # This tells you how many separate POLYGONs it has
 # Extract just the first POLYGON (index with [[n]])
-single_poly <- st_sfc(st_polygon(multi_geom[[14]]), crs = st_crs(MetroVanA))
+single_poly <- st_sfc(st_polygon(multi_geom[[14]]), 
+                      crs = st_crs(MetroVanA))
 # Now you can make it an sf object if needed
-UBCVan <- st_sf(MetroVanA[1, -which(names(MetroVanA) == "geometry")], geometry = single_poly)
+UBCVan <- st_sf(MetroVanA[1, -which(names(MetroVanA) == "geometry")], 
+                geometry = single_poly)
 
 UBCVan$CSDNAME <- "UBC Campus"
 
@@ -264,7 +302,7 @@ UBC_omec <- compute_omec(
 UBCVan_with_omec <- dplyr::bind_cols(UBCVan, UBC_omec)
 ```
 
-To check that the UBC Campus location is correct we'll use this code to make a figure 
+To check that the UBC Campus location is correct we'll use this code to make a figure
 
 ```{r}
 ## Plot the data to check that everything works with this function
@@ -274,23 +312,32 @@ plot_omec <- function(row) {
   
   # 2. Create center point in lat/lon
   center_lonlat <- sf::st_sfc(
-    sf::st_point(c(row$OMEC_POINT_LON, row$OMEC_POINT_LAT)),
+    sf::st_point(c(row$OMEC_POINT_LON, 
+                   row$OMEC_POINT_LAT)),
     crs = "EPSG:4326"
   )
   
   # 3. Project center to city CRS
-  center_projected <- sf::st_transform(center_lonlat, sf::st_crs(city_geom))
+  center_projected <- sf::st_transform(center_lonlat, 
+                                       sf::st_crs(city_geom))
   
   # 4. Create OMEC circle as buffer
-  omec_circle <- sf::st_buffer(center_projected, dist = row$OMEC_RADIUS_M)
+  omec_circle <- sf::st_buffer(center_projected, 
+                               dist = row$OMEC_RADIUS_M)
   
   # 5. Plot city, OMEC circle, and point
   plot(city_geom,
        # main = paste("OMEC for", row$CSDNAME),
        col = "lightblue"
        )
-  plot(omec_circle, border = "red", lwd = 2, add = TRUE)
-  plot(center_projected, col = "black", pch = 19, add = TRUE)
+  plot(omec_circle, 
+       border = "red", 
+       lwd = 2, 
+       add = TRUE)
+  plot(center_projected, 
+       col = "black", 
+       pch = 19, 
+       add = TRUE)
 }
 ```
 
@@ -318,9 +365,6 @@ Using the code above we should be able to tackle most issues relating to retrosp
 
 Sometimes collection data is too specific to follow this systematic approach.
 
-In cases when it is preferable to sacrifice collection site specificity in order to maintain systematic methodology --- when a polygon can not be easily obtained --- the specific collection site can be listed in collection data notes while using the point-radius data of the Canadian Census Subdivision that is most appropriate to the location (e.g. Fernwood Neighbourhood -> Victoria, BC).
+In cases when it is preferable to sacrifice collection site specificity in order to maintain systematic methodology --- when a polygon can not be easily obtained --- the specific collection site can be listed in collection data notes while using the point-radius data of the Canadian Census Subdivision that is most appropriate to the location (e.g. Fernwood Neighbourhood -\> Victoria, BC).
 
 In cases when it is preferable to maintain collection site specificity sacrifice the systematic methodology --- when a polygon can not be easily obtained --- one can assign a point near the centre of the collection site listed and assign an accuracy radius that includes the whole extent of the location. When this method is employed it is inappropriate to list Zermoglio et al. ([2020](https://doi.org/10.35035/e09p-h128)) as the protocol used and the details of this method should be explained wherever possible.
-
-
-
