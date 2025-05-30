@@ -146,13 +146,13 @@ plot_omec <- function(row) {
 
 In some cases, the point radius is relatively simple as the point falls inside of the polygon (e.g. Figure 1).
 
-```{r VancouverMap, include = TRUE, echo = FALSE, fig.cap = "Figure 1: Polygon of the Census Subdivision for Vancouver, BC, in blue with the OEMC in red and the centroid point in black."}
+```{r VancouverMap, include = TRUE, echo = FALSE, fig.cap = "Polygon of the Census Subdivision for Vancouver, BC, in blue with the OEMC in red and the centroid point in black."}
 plot_omec(BC_CSD_omec |> dplyr::filter(CSDNAME == "Vancouver"))
 ```
 
 In other cases the point falls outside of the polygon and the circle must therefore be adjusted so that the circle is still the smallest it can be but with the point landing on the edge of the polygon (e.g. Figure 2). The new "corrected centre" OMEC will always be larger than the "geographic centre" OMEC but the point lands within the polygon.
 
-```{r ElkfordMap, include = TRUE, echo = FALSE, fig.cap = "Figure 1: Polygon of the Census Subdivision for Elkford, BC, in blue with the corrected-centre OEMC in red and the centroid point in black."}
+```{r ElkfordMap, include = TRUE, echo = FALSE, fig.cap = "Polygon of the Census Subdivision for Elkford, BC, in blue with the corrected-centre OEMC in red and the centroid point in black."}
 plot_omec(BC_CSD_omec |> dplyr::filter(CSDNAME == "Elkford"))
 ```
 
@@ -244,7 +244,7 @@ This code calculates the OMEC, defines the centroid, checks that the centroid is
 
 For some specimens, the location given may not be well encapsulated by the data we have here. In some cases, it probably isn't worth dealing with (e.g. Portage Inlet, BC can be included in View Royal without much issue) while in others, it may be totally inappropriate. The most noteworthy example here is UBC Vancouver. UBC is not included in the CSD for Vancouver but is included in Metro Vancouver A CSD (Figure 3). The corrected-centre for Metro Vancouver A is far from the UBC campus and it would be useful to use a better method.
 
-```{r UBCVanIssue, include = TRUE, echo = FALSE, fig.cap = "Figure 3: Polygon of the Census Subdivision for Metro Vancouver A, BC, in grey with the UBC Campus in red and the centroid point in black."}
+```{r UBCVanIssue, include = TRUE, echo = FALSE, fig.cap = "Polygon of the Census Subdivision for Metro Vancouver A, BC, in grey with the UBC Campus in red and the centroid point in black."}
 metro_geom <- BC_CSD_omec |>
   dplyr::filter(CSDNAME == "Metro Vancouver A") |>
   sf::st_geometry()
@@ -341,7 +341,7 @@ plot_omec <- function(row) {
 }
 ```
 
-```{r UBCcampus, include = TRUE, echo = FALSE, fig.cap = "Figure 4: Polygon of the new polygon for UBC Campus in blue with the corrected-centre OEMC in red and the centroid point in black."}
+```{r UBCcampus, include = TRUE, echo = FALSE, fig.cap = "Polygon of the new polygon for UBC Campus in blue with the corrected-centre OEMC in red and the centroid point in black."}
 plot_omec(UBCVan_with_omec |> dplyr::filter(CSDNAME == "UBC Campus"))
 ```
 
