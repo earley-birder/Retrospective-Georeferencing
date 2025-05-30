@@ -1,0 +1,5 @@
+The code included here demonstrates how point-radius retrospective georeferencing can be achieved from Canadian Census Subdivisions in R. 
+
+The data, which are not included in this Github repository, can be downloaded from Statistics Canada here: https://www12.statcan.gc.ca/census-recensement/2021/geo/sip-pis/boundary-limites/index2021-eng.cfm?year=21.
+
+The methods used for Data download are outlined in the .html file knitted from the .Rmd.
