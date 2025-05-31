@@ -158,6 +158,8 @@ In other cases the point falls outside of the polygon and the circle must theref
 plot_omec(BC_CSD_omec |> dplyr::filter(CSDNAME == "Elkford"))
 ```
 
+\newpage
+
 To calculate the OMEC and point radius for every Census Subdivision in BC I use the following code:
 
 ```{r OMECcodeEX, eval = FALSE}
