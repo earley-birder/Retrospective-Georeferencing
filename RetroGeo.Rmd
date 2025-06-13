@@ -107,9 +107,9 @@ compute_omec <- function(PRUID,
     sf::st_coordinates()
   
   return(tibble::tibble(
-    OMEC_POINT_LAT = center_latlon[2],
-    OMEC_POINT_LON = center_latlon[1],
-    OMEC_RADIUS_M = as.numeric(radius)
+    OMEC_LAT = center_latlon[2],
+    OMEC_LON = center_latlon[1],
+    OMEC_RAD_M = as.numeric(radius)
   ))
 }
 
@@ -129,7 +129,7 @@ plot_omec <- function(row) {
   
   # 2. Create center point in lat/lon
   center_lonlat <- sf::st_sfc(
-    sf::st_point(c(row$OMEC_POINT_LON, row$OMEC_POINT_LAT)),
+    sf::st_point(c(row$OMEC_LON, row$OMEC_LAT)),
     crs = "EPSG:4326"
   )
   
@@ -137,7 +137,7 @@ plot_omec <- function(row) {
   center_projected <- sf::st_transform(center_lonlat, sf::st_crs(city_geom))
   
   # 4. Create OMEC circle as buffer
-  omec_circle <- sf::st_buffer(center_projected, dist = row$OMEC_RADIUS_M)
+  omec_circle <- sf::st_buffer(center_projected, dist = row$OMEC_RAD_M)
   
   # 5. Plot city, OMEC circle, and point
   plot(city_geom,
@@ -227,9 +227,9 @@ compute_omec <- function(PRUID, CSDNAME, CSDTYPE, geom) {
     sf::st_coordinates()
 
   return(tibble::tibble(
-    OMEC_POINT_LAT = center_latlon[2],
-    OMEC_POINT_LON = center_latlon[1],
-    OMEC_RADIUS_M = as.numeric(radius)
+    OMEC_LAT = center_latlon[2],
+    OMEC_LON = center_latlon[1],
+    OMEC_RAD_M = as.numeric(radius)
   ))
 }
 
@@ -286,10 +286,10 @@ highlight_poly <- sf::st_sfc(sf::st_polygon(multi_geom[[14]]),
 plot(highlight_poly, col = "red", add = TRUE)
 pt <- BC_CSD_omec |>
   dplyr::filter(CSDNAME == "Metro Vancouver A") |>
-  dplyr::select(OMEC_POINT_LON, OMEC_POINT_LAT) |>
+  dplyr::select(OMEC_LON, OMEC_LAT) |>
   as.data.frame()
-points(pt$OMEC_POINT_LON, 
-       pt$OMEC_POINT_LAT, 
+points(pt$OMEC_LON, 
+       pt$OMEC_LAT, 
        pch = 19, 
        col = "black")
 ```
@@ -339,8 +339,8 @@ plot_omec <- function(row) {
   
   # 2. Create center point in lat/lon
   center_lonlat <- sf::st_sfc(
-    sf::st_point(c(row$OMEC_POINT_LON, 
-                   row$OMEC_POINT_LAT)),
+    sf::st_point(c(row$OMEC_LON, 
+                   row$OMEC_LAT)),
     crs = "EPSG:4326"
   )
   
@@ -350,7 +350,7 @@ plot_omec <- function(row) {
   
   # 4. Create OMEC circle as buffer
   omec_circle <- sf::st_buffer(center_projected, 
-                               dist = row$OMEC_RADIUS_M)
+                               dist = row$OMEC_RAD_M)
   
   # 5. Plot city, OMEC circle, and point
   plot(city_geom,
@@ -383,6 +383,13 @@ BC_CSD_omec <- dplyr::bind_rows(BC_CSD_omec, UBCVan_with_omec)
 
 ## Check to make sure that UBC Campus is now included
 tail(BC_CSD_omec)
+```
+
+```{r, warning = FALSE}
+## Write a new .shp with the OMEC lats, longs, and radius
+sf::st_write(BC_CSD_omec,
+             "GeneratedData/BC_CSD_omec.shp",
+             delete_dsn = TRUE)
 ```
 
 # Conclusion
