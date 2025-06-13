@@ -386,10 +386,21 @@ tail(BC_CSD_omec)
 ```
 
 ```{r, warning = FALSE}
-## Write a new .shp with the OMEC lats, longs, and radius
+## Write a new .shp with the OMEC stuff
 sf::st_write(BC_CSD_omec,
-             "GeneratedData/BC_CSD_omec.shp",
+             "GeneratedData/shpData/BC_CSD_omec.shp",
              delete_dsn = TRUE)
+
+## Extract data for df
+OMEC.df <- BC_CSD_omec %>% 
+  dplyr::select(CSDUID, CSDNAME, CSDTYPE, 
+                OMEC_LAT, OMEC_LON, OMEC_RAD_M) %>%
+  sf::st_drop_geometry()
+
+## Write a new .csv with the OMEC stuff only
+readr::write_csv(OMEC.df, 
+                 "GeneratedData/dfData/OMEC_df.csv")
+  
 ```
 
 # Conclusion
